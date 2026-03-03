@@ -103,3 +103,51 @@ Make sure the cookie file above exists. If it expires, re-upload a fresh one and
 
 - Follow the MV-SAM3D README for dataset preparation and model usage.
 - If you need Depth Anything 3, follow the upstream install in their repo and ask me to integrate it here.
+
+## Dataset Reformat + MV-SAM3D Reconstruction
+
+After the setup finishes and the dataset is downloaded, use the scripts below to:
+1) reorganize the dataset into a cleaner layout,
+2) generate RGBA masks from depth maps,
+3) run MV-SAM3D reconstruction and save outputs back into the dataset.
+
+### 1) Reformat the dataset
+
+This creates `datasets/generative_haptic/objects/<group>/<object>/` with:
+- `raw/{rgb,depth,thermal,meta}` (symlinked by default)
+- `manifests/frames.csv` and `manifests/thermal.csv`
+- `object.json` summary
+
+```bash
+python scripts/reformat_dataset.py \
+  --src downloads/generative_haptic_dataset/Data_group \
+  --dst datasets/generative_haptic \
+  --mode symlink
+```
+
+### 2) Build MV-SAM3D inputs (masks from depth)
+
+This creates `mv_sam3d/images/` and `mv_sam3d/<object_id>/` masks per object.
+
+```bash
+python scripts/generate_mv_sam3d_masks.py \
+  --dataset-root datasets/generative_haptic
+```
+
+### 3) Run MV-SAM3D inference for each object
+
+Outputs are copied into:
+`datasets/generative_haptic/objects/<group>/<object>/mv_sam3d/outputs/`
+
+```bash
+python scripts/run_mv_sam3d_objects.py \
+  --dataset-root datasets/generative_haptic \
+  --mv-sam3d-root MV-SAM3D
+```
+
+Tip: for a quick smoke test, add `--image-limit 8` to use the first 8 frames only.
+
+### Notes
+
+- `object_id` is `<group>__<object>` to avoid name collisions across groups.
+- Logs are saved in `mv_sam3d/logs/` under each object.
