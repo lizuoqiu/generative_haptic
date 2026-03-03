@@ -1,0 +1,16 @@
+# local envs and caches
+.venv/
+__pycache__/
+*.pyc
+
+# large data / downloads
+downloads/
+
+# external repos
+MV-SAM3D/
+
+# IDE
+.idea/
+
+# cookies / secrets
+*cookies*.txt
